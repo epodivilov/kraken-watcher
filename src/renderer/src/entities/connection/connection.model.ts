@@ -15,6 +15,8 @@ export const activeConnectionIdAtom = atomWithStorage<string | null>(
   null,
 );
 
+export const hasConnectionsAtom = atom((get) => get(connectionsAtom).length > 0);
+
 export const activeConnectionAtom = atom((get) => {
   const connections = get(connectionsAtom);
   const activeId = get(activeConnectionIdAtom);
