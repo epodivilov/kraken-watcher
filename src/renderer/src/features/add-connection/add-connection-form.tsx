@@ -42,7 +42,7 @@ export const AddConnectionForm: FC<AddConnectionFormProps> = ({ onSuccess }) => 
           placeholder="e.g., epodivilov/kraken-watcher"
           onInput={() => setError(null)}
           error={error}
-          autoFocus
+          data-autofocus
           required
         />
         <TextInput
