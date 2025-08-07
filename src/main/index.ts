@@ -3,7 +3,7 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { registerGitHubApiHandlers } from "./api";
-import { GitHubService } from "./services";
+import { CacheService, GitHubService } from "./services";
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -41,7 +41,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  const githubService = new GitHubService();
+  const cacheService = CacheService.getInstance();
+  const githubService = new GitHubService(cacheService);
   registerGitHubApiHandlers(githubService);
 
   createWindow();

@@ -1,5 +1,6 @@
 import type { GitHubIssue, GetIssuesResult, Result } from "@/shared/types";
 import { err, ok } from "@/shared/types";
+import type { CacheService } from "./cache-service";
 
 const GITHUB_API_URL = "https://api.github.com";
 const ISSUES_PER_PAGE = 10;
@@ -23,6 +24,12 @@ interface GitHubSearchApiResult {
 }
 
 export class GitHubService {
+  private cache: ReturnType<(typeof CacheService)["getInstance"]>;
+
+  constructor(cache: ReturnType<(typeof CacheService)["getInstance"]>) {
+    this.cache = cache;
+  }
+
   public async getIssues(params: GetIssuesParams): Promise<Result<GetIssuesResult, ApiError>> {
     const { owner, repo, token, state, page } = params;
     const url = new URL(`${GITHUB_API_URL}/search/issues`);
@@ -35,30 +42,35 @@ export class GitHubService {
     url.searchParams.append("q", queryParts.join(" "));
     url.searchParams.append("page", page.toString());
     url.searchParams.append("per_page", ISSUES_PER_PAGE.toString());
+    const cacheKey = url.toString();
 
     try {
-      const headers: Record<string, string> = {
-        Accept: "application/vnd.github.v3+json",
-      };
+      const cachedData = await this.cache<Result<GetIssuesResult, ApiError>>(cacheKey, async () => {
+        const headers: Record<string, string> = {
+          Accept: "application/vnd.github.v3+json",
+        };
 
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
 
-      const response = await fetch(url.toString(), { headers });
+        const response = await fetch(url.toString(), { headers });
 
-      if (!response.ok) {
-        const errorBody = await response.json();
-        return err({
-          message: errorBody.message || "Failed to fetch issues",
-          statusCode: response.status,
-        });
-      }
+        if (!response.ok) {
+          const errorBody = await response.json();
+          return err({
+            message: errorBody.message || "Failed to fetch issues",
+            statusCode: response.status,
+          });
+        }
 
-      const data: GitHubSearchApiResult = await response.json();
-      const hasNextPage = page * ISSUES_PER_PAGE < data.total_count;
+        const data: GitHubSearchApiResult = await response.json();
+        const hasNextPage = page * ISSUES_PER_PAGE < data.total_count;
 
-      return ok({ issues: data.items, hasNextPage });
+        return ok({ issues: data.items, hasNextPage });
+      });
+
+      return cachedData.value;
     } catch (error) {
       return err({
         message: error instanceof Error ? error.message : "An unknown network error occurred",
