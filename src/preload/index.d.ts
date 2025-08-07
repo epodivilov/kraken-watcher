@@ -1,5 +1,5 @@
 import type { IpcRenderer } from "electron";
-import type { GitHubIssue, Result } from "@shared/types";
+import type { GitHubIssue, Result } from "@/shared/types";
 
 interface GitHubApi {
   getIssues: (args: {

@@ -1,141 +1,86 @@
-import { Table } from "@mantine/core";
+import { Anchor, Badge, Box, Center, Group, Loader, Paper, ScrollArea, Table, Text } from "@mantine/core";
+import { useAtom } from "jotai";
 import { FC } from "react";
 
+import { issuesAtom } from "@renderer/entities/issue";
 import { PageLayout } from "@renderer/widgets/page-layout";
 
-const issues = [
-  {
-    assignee: "Alice",
-    id: "KW-1",
-    priority: "High",
-    status: "Open",
-    title: "UI Bug: Button alignment is off on the login screen",
-  },
-  {
-    assignee: "Bob",
-    id: "KW-2",
-    priority: "Medium",
-    status: "In Progress",
-    title: "Feature: Implement dark mode theme",
-  },
-  {
-    assignee: "Alice",
-    id: "KW-3",
-    priority: "High",
-    status: "In Review",
-    title: "Refactor: Optimize database query for user profiles",
-  },
-  {
-    assignee: "Charlie",
-    id: "KW-4",
-    priority: "Low",
-    status: "Done",
-    title: "Docs: Update API documentation for the new endpoint",
-  },
-  {
-    assignee: "Bob",
-    id: "KW-5",
-    priority: "Critical",
-    status: "In Progress",
-    title: "Performance: Investigate slow loading times on the dashboard",
-  },
-  {
-    assignee: "",
-    id: "KW-6",
-    priority: "Medium",
-    status: "Backlog",
-    title: "Feature: Add support for social media logins (Google, GitHub)",
-  },
-  {
-    assignee: "",
-    id: "KW-7",
-    priority: "High",
-    status: "Open",
-    title: "Bug: Application crashes when uploading a file larger than 10MB",
-  },
-  {
-    assignee: "Charlie",
-    id: "KW-8",
-    priority: "Medium",
-    status: "In Progress",
-    title: "Tests: Increase test coverage for the payments module",
-  },
-  {
-    assignee: "Alice",
-    id: "KW-9",
-    priority: "Low",
-    status: "Done",
-    title: "Chore: Upgrade Node.js to the latest LTS version",
-  },
-  {
-    assignee: "",
-    id: "KW-10",
-    priority: "High",
-    status: "Backlog",
-    title: "Feature: Build a new reporting and analytics page",
-  },
-  {
-    assignee: "Bob",
-    id: "KW-11",
-    priority: "Medium",
-    status: "In Progress",
-    title: "UI/UX: Redesign the main navigation menu for better usability",
-  },
-  {
-    assignee: "Charlie",
-    id: "KW-12",
-    priority: "Critical",
-    status: "Open",
-    title: "Bug: Incorrect data displayed on the weekly summary report",
-  },
-  {
-    assignee: "",
-    id: "KW-13",
-    priority: "High",
-    status: "Backlog",
-    title: "Refactor: Switch from REST API to GraphQL for issue data",
-  },
-  {
-    assignee: "Alice",
-    id: "KW-14",
-    priority: "Critical",
-    status: "In Progress",
-    title: "Security: Implement two-factor authentication (2FA)",
-  },
-  {
-    assignee: "",
-    id: "KW-15",
-    priority: "Low",
-    status: "Open",
-    title: "Chore: Clean up unused CSS styles and assets",
-  },
-];
+import classes from "./issues-page.module.css";
 
 export const IssuesPage: FC = () => {
-  const rows = [...issues, ...issues].map((issue) => (
+  const [issuesLoadable] = useAtom(issuesAtom);
+
+  if (issuesLoadable.state === "loading") {
+    return (
+      <PageLayout>
+        <Box className={classes.centered}>
+          <Loader />
+        </Box>
+      </PageLayout>
+    );
+  }
+
+  if (issuesLoadable.state === "hasError") {
+    return (
+      <PageLayout>
+        <Paper className={classes.centered} withBorder p="lg">
+          <Text c="red" ta="center">
+            Error: {(issuesLoadable.error as any).message}
+          </Text>
+        </Paper>
+      </PageLayout>
+    );
+  }
+
+  if (issuesLoadable.data.length === 0) {
+    return (
+      <PageLayout>
+        <Center h="100%">
+          <Text>No issues found.</Text>
+        </Center>
+      </PageLayout>
+    );
+  }
+
+  const rows = issuesLoadable.data.map((issue) => (
     <Table.Tr key={issue.id}>
-      <Table.Td>{issue.id}</Table.Td>
+      <Table.Td>
+        <Anchor href={issue.html_url} target="_blank">
+          {issue.number}
+        </Anchor>
+      </Table.Td>
       <Table.Td>{issue.title}</Table.Td>
-      <Table.Td>{issue.status}</Table.Td>
-      <Table.Td>{issue.priority}</Table.Td>
-      <Table.Td>{issue.assignee}</Table.Td>
+      <Table.Td>
+        <Badge color={issue.state === "open" ? "green" : "red"}>{issue.state}</Badge>
+      </Table.Td>
+      <Table.Td>
+        <Group gap="xs">
+          {issue.labels.map((label) => (
+            <Badge key={label.name} color={`#${label.color}`}>
+              {label.name}
+            </Badge>
+          ))}
+        </Group>
+      </Table.Td>
     </Table.Tr>
   ));
 
   return (
     <PageLayout>
-      <Table stickyHeader stickyHeaderOffset={60}>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>ID</Table.Th>
-            <Table.Th>Title</Table.Th>
-            <Table.Th>Status</Table.Th>
-            <Table.Th>Priority</Table.Th>
-            <Table.Th>Assignee</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+      <ScrollArea h="100%">
+        <Table stickyHeader stickyHeaderOffset={0}>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>ID</Table.Th>
+              <Table.Th>Title</Table.Th>
+              <Table.Th>Status</Table.Th>
+              <Table.Th>Labels</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </ScrollArea>
     </PageLayout>
   );
 };
+
