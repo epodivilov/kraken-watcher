@@ -38,7 +38,7 @@ export const AddConnectionForm: FC<AddConnectionFormProps> = ({ onSuccess }) => 
       <Stack>
         <TextInput
           name="repoPath"
-          label="Repository*"
+          label="Repository"
           placeholder="e.g., epodivilov/kraken-watcher"
           onInput={() => setError(null)}
           error={error}
