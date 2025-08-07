@@ -16,3 +16,8 @@ export interface GitHubIssue {
   updated_at: string;
   pull_request?: unknown;
 }
+
+export interface GetIssuesResult {
+  issues: GitHubIssue[];
+  hasNextPage: boolean;
+}

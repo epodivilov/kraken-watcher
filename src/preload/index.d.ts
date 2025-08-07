@@ -1,13 +1,18 @@
 import type { IpcRenderer } from "electron";
-import type { GitHubIssue, Result } from "@/shared/types";
+import type { GetIssuesResult, GitHubIssue, Result } from "@/shared/types";
+
+interface GetIssuesParams {
+  owner: string;
+  repo: string;
+  token: string;
+  page: number;
+  state?: "open" | "closed" | "all";
+}
 
 interface GitHubApi {
-  getIssues: (args: {
-    owner: string;
-    repo: string;
-    token: string;
-    state?: "open" | "closed" | "all";
-  }) => Promise<Result<GitHubIssue[], { message: string; statusCode: number }>>;
+  getIssues: (
+    args: GetIssuesParams,
+  ) => Promise<Result<GetIssuesResult, { message: string; statusCode: number }>>;
 }
 
 interface SafeIpcRenderer {

@@ -1,12 +1,14 @@
-import type { GitHubIssue, Result } from "@/shared/types";
+import type { GitHubIssue, GetIssuesResult, Result } from "@/shared/types";
 import { err, ok } from "@/shared/types";
 
 const GITHUB_API_URL = "https://api.github.com";
+const ISSUES_PER_PAGE = 10;
 
 interface GetIssuesParams {
   owner: string;
   repo: string;
   token: string;
+  page: number;
   state?: "open" | "closed" | "all";
 }
 
@@ -15,13 +17,24 @@ interface ApiError {
   statusCode: number;
 }
 
+interface GitHubSearchApiResult {
+  total_count: number;
+  items: GitHubIssue[];
+}
+
 export class GitHubService {
-  public async getIssues(params: GetIssuesParams): Promise<Result<GitHubIssue[], ApiError>> {
-    const { owner, repo, token, state } = params;
-    const url = new URL(`${GITHUB_API_URL}/repos/${owner}/${repo}/issues`);
-    if (state) {
-      url.searchParams.append("state", state);
+  public async getIssues(params: GetIssuesParams): Promise<Result<GetIssuesResult, ApiError>> {
+    const { owner, repo, token, state, page } = params;
+    const url = new URL(`${GITHUB_API_URL}/search/issues`);
+
+    const queryParts = [`repo:${owner}/${repo}`, "is:issue"];
+    if (state && state !== "all") {
+      queryParts.push(`state:${state}`);
     }
+
+    url.searchParams.append("q", queryParts.join(" "));
+    url.searchParams.append("page", page.toString());
+    url.searchParams.append("per_page", ISSUES_PER_PAGE.toString());
 
     try {
       const headers: Record<string, string> = {
@@ -42,10 +55,10 @@ export class GitHubService {
         });
       }
 
-      const data: GitHubIssue[] = await response.json();
-      const issuesOnly = data.filter((issue) => issue.pull_request === undefined);
+      const data: GitHubSearchApiResult = await response.json();
+      const hasNextPage = page * ISSUES_PER_PAGE < data.total_count;
 
-      return ok(issuesOnly);
+      return ok({ issues: data.items, hasNextPage });
     } catch (error) {
       return err({
         message: error instanceof Error ? error.message : "An unknown network error occurred",

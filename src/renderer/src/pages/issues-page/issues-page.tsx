@@ -1,14 +1,15 @@
-import { Anchor, Badge, Box, Center, Group, Loader, Paper, ScrollArea, Table, Text } from "@mantine/core";
+import { Anchor, Badge, Box, Button, Center, Group, Loader, Paper, ScrollArea, Table, Text } from "@mantine/core";
 import { useAtom } from "jotai";
 import { FC } from "react";
 
-import { issuesAtom } from "@renderer/entities/issue";
+import { issuesAtom, issuesPageAtom } from "@renderer/entities/issue";
 import { PageLayout } from "@renderer/widgets/page-layout";
 
 import classes from "./issues-page.module.css";
 
 export const IssuesPage: FC = () => {
   const [issuesLoadable] = useAtom(issuesAtom);
+  const [page, setPage] = useAtom(issuesPageAtom);
 
   if (issuesLoadable.state === "loading") {
     return (
@@ -32,7 +33,7 @@ export const IssuesPage: FC = () => {
     );
   }
 
-  if (issuesLoadable.data.length === 0) {
+  if (issuesLoadable.data.issues.length === 0) {
     return (
       <PageLayout>
         <Center h="100%">
@@ -42,7 +43,9 @@ export const IssuesPage: FC = () => {
     );
   }
 
-  const rows = issuesLoadable.data.map((issue) => (
+  const { issues, hasNextPage } = issuesLoadable.data;
+
+  const rows = issues.map((issue) => (
     <Table.Tr key={issue.id}>
       <Table.Td>
         <Anchor href={issue.html_url} target="_blank">
@@ -67,7 +70,7 @@ export const IssuesPage: FC = () => {
 
   return (
     <PageLayout>
-      <ScrollArea h="100%">
+      <ScrollArea h="calc(100% - 60px)">
         <Table stickyHeader stickyHeaderOffset={0}>
           <Table.Thead>
             <Table.Tr>
@@ -80,7 +83,15 @@ export const IssuesPage: FC = () => {
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
       </ScrollArea>
+      <Group justify="center" pt="md">
+        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
+          Previous
+        </Button>
+        <Text>Page {page}</Text>
+        <Button onClick={() => setPage(page + 1)} disabled={!hasNextPage}>
+          Next
+        </Button>
+      </Group>
     </PageLayout>
   );
 };
-
