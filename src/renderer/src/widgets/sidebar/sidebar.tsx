@@ -1,12 +1,47 @@
 import { ActionIcon, AppShell, Group, Image, Modal, NavLink, Stack, Text, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconPlus, IconTrash } from "@tabler/icons-react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { FC } from "react";
 
-import { connectionsAtom } from "@renderer/entities/connection";
+import {
+  Connection,
+  connectionsAtom,
+  activeConnectionIdAtom,
+  removeConnectionAtom,
+} from "@renderer/entities/connection";
 import { AddConnectionForm } from "@renderer/features/add-connection";
 import icon from "@renderer/assets/icon.webp";
+
+interface RepoLinkProps {
+  connection: Connection;
+  isActive: boolean;
+  onClick: () => void;
+  onRemove: () => void;
+}
+
+const RepoLink: FC<RepoLinkProps> = ({ connection, isActive, onClick, onRemove }) => (
+  <NavLink
+    key={connection.id}
+    label={connection.repo}
+    description={connection.owner}
+    active={isActive}
+    onClick={onClick}
+    rightSection={
+      <ActionIcon
+        size="sm"
+        variant="light"
+        color="red"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+      >
+        <IconTrash size="0.8rem" />
+      </ActionIcon>
+    }
+  />
+);
 
 interface SidebarProps {
   opened: boolean;
@@ -14,12 +49,10 @@ interface SidebarProps {
 }
 
 export const Sidebar: FC<SidebarProps> = ({ opened, toggle }) => {
-  const [connections, setConnections] = useAtom(connectionsAtom);
+  const [connections] = useAtom(connectionsAtom);
+  const [activeConnectionId, setActiveConnectionId] = useAtom(activeConnectionIdAtom);
+  const removeConnection = useSetAtom(removeConnectionAtom);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
-
-  const handleRemoveConnection = (id: string) => {
-    setConnections((prev) => prev.filter((c) => c.id !== id));
-  };
 
   return (
     <>
@@ -44,23 +77,12 @@ export const Sidebar: FC<SidebarProps> = ({ opened, toggle }) => {
             </ActionIcon>
           </Group>
           {connections.map((conn) => (
-            <NavLink
+            <RepoLink
               key={conn.id}
-              label={`${conn.owner}/${conn.repo}`}
-              active
-              rightSection={
-                <ActionIcon
-                  size="sm"
-                  variant="light"
-                  color="red"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveConnection(conn.id);
-                  }}
-                >
-                  <IconTrash size="0.8rem" />
-                </ActionIcon>
-              }
+              connection={conn}
+              isActive={activeConnectionId === conn.id}
+              onClick={() => setActiveConnectionId(conn.id)}
+              onRemove={() => removeConnection(conn.id)}
             />
           ))}
         </Stack>

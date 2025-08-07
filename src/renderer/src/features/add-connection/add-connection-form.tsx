@@ -1,23 +1,24 @@
 import { Button, Stack, TextInput, Alert, Space } from "@mantine/core";
 import { useSetAtom } from "jotai";
-import { FC, useState } from "react";
-import { nanoid } from "nanoid";
+import { FC, useState, useRef } from "react";
 
-import { connectionsAtom } from "@renderer/entities/connection";
+import { addConnectionAtom } from "@renderer/entities/connection";
 
 interface AddConnectionFormProps {
   onSuccess?: () => void;
 }
 
 export const AddConnectionForm: FC<AddConnectionFormProps> = ({ onSuccess }) => {
-  const setConnections = useSetAtom(connectionsAtom);
-  const [repoPath, setRepoPath] = useState("");
-  const [token, setToken] = useState("");
+  const addConnection = useSetAtom(addConnectionAtom);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    const formData = new FormData(event.currentTarget);
+    const repoPath = formData.get('repoPath') as string;
+    const token = formData.get('token') as string;
 
     const parts = repoPath.split("/").filter(Boolean);
     if (parts.length !== 2) {
@@ -26,31 +27,28 @@ export const AddConnectionForm: FC<AddConnectionFormProps> = ({ onSuccess }) => 
     }
 
     const [owner, repo] = parts;
-    setConnections((prev) => [...prev, { id: nanoid(), owner, repo, token }]);
-    setRepoPath("");
-    setToken("");
+    addConnection({ owner, repo, token });
+
+    formRef.current?.reset();
     onSuccess?.();
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 500 }}>
+    <form ref={formRef} onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 500 }}>
       <Stack>
         <TextInput
+          name="repoPath"
           label="Repository*"
           placeholder="e.g., epodivilov/kraken-watcher"
-          value={repoPath}
-          onChange={(event) => setRepoPath(event.currentTarget.value)}
           onInput={() => setError(null)}
           error={error}
-          data-autofocus
+          autoFocus
           required
         />
         <TextInput
+          name="token"
           label="PAT (optional)"
           placeholder="Personal Access Token"
-          value={token}
-          onChange={(event) => setToken(event.currentTarget.value)}
-          onInput={() => setError(null)}
         />
         {error && (
           <Alert color="red" title="Error">
