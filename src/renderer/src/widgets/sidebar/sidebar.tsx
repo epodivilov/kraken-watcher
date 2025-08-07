@@ -22,11 +22,17 @@ interface RepoLinkProps {
 
 const RepoLink: FC<RepoLinkProps> = ({ connection, isActive, onClick, onRemove }) => (
   <NavLink
+    tabIndex={0}
     key={connection.id}
     label={connection.repo}
     description={connection.owner}
     active={isActive}
     onClick={onClick}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        onClick();
+      }
+    }}
     rightSection={
       <ActionIcon
         size="sm"
@@ -66,7 +72,13 @@ export const Sidebar: FC<SidebarProps> = ({ opened, toggle }) => {
     <>
       <AppShell.Header>
         <Group h="100%" px="md">
-          <ActionIcon onClick={toggle} variant="transparent" size="lg" aria-label="Toggle sidebar">
+          <ActionIcon
+            onClick={toggle}
+            variant="transparent"
+            size="lg"
+            aria-label="Toggle sidebar"
+            aria-keyshortcuts="ctrl+b"
+          >
             {opened ? <IconLayoutSidebarLeftCollapse stroke={1.5} /> : <IconLayoutSidebarLeftExpand stroke={1.5} />}
           </ActionIcon>
           <Image src={icon} h={30} w={30} alt="Kraken Watcher Logo" />
@@ -80,10 +92,11 @@ export const Sidebar: FC<SidebarProps> = ({ opened, toggle }) => {
             <Text size="xs" fw={500} c="dimmed">
               Connections
             </Text>
-            <ActionIcon size="sm" variant="subtle" onClick={openModal}>
+            <ActionIcon size="sm" variant="subtle" onClick={openModal} aria-keyshortcuts="ctrl+n">
               <IconPlus />
             </ActionIcon>
           </Group>
+
           {connections.map((conn) => (
             <RepoLink
               key={conn.id}

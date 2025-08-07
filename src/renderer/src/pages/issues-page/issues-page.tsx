@@ -84,11 +84,11 @@ export const IssuesPage: FC = () => {
         </Table>
       </ScrollArea>
       <Group justify="center" pt="md">
-        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
+        <Button onClick={() => setPage(page - 1)} disabled={page === 1} aria-keyshortcuts="ctrl+ArrowLeft">
           Previous
         </Button>
         <Text>Page {page}</Text>
-        <Button onClick={() => setPage(page + 1)} disabled={!hasNextPage}>
+        <Button onClick={() => setPage(page + 1)} disabled={!hasNextPage} aria-keyshortcuts="ctrl+ArrowRight">
           Next
         </Button>
       </Group>

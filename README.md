@@ -44,6 +44,17 @@ State is managed using Jotai, a modern, atomic state management library.
   - **Simplicity & Scalability:** State is broken down into small, independent units (atoms). This avoids the boilerplate and complexity of monolithic state stores.
   - **Declarative Data Fetching:** Asynchronous operations are handled declaratively using the `loadable` utility from `jotai/utils`. This utility automatically manages `loading`, `data`, and `error` states, simplifying component logic significantly.
 
+## Keyboard Shortcuts
+
+The application provides the following keyboard shortcuts for quick navigation and actions:
+
+| Action                 | Shortcut            |
+| ---------------------- | ------------------- |
+| **Toggle Sidebar**     | `Ctrl + B`          |
+| **New Connection**     | `Ctrl + N`          |
+| **Previous Page**      | `Ctrl + Left Arrow` |
+| **Next Page**          | `Ctrl + Right Arrow`|
+
 ## Getting Started
 
 ### Prerequisites
