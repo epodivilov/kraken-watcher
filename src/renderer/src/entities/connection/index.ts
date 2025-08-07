@@ -1,2 +1,1 @@
-export * from './model/connection-state'
-
+export * from './connection.model';
