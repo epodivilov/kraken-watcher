@@ -1,22 +1,36 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { IpcChannels } from "@/shared/constants";
+import type { GitHubIssue, Result } from "@/shared/types";
+import { contextBridge, ipcRenderer } from "electron";
 
-// Custom APIs for renderer
-const api = {}
+const github = {
+  getIssues: (args: {
+    owner: string;
+    repo: string;
+    token: string;
+    state?: "open" | "closed" | "all";
+  }): Promise<Result<GitHubIssue[], { message: string; statusCode: number }>> =>
+    ipcRenderer.invoke(IpcChannels.GITHUB_GET_ISSUES, args),
+};
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+const electron = {
+  ipcRenderer: {
+    ...ipcRenderer,
+    on: ipcRenderer.on.bind(ipcRenderer),
+    removeListener: ipcRenderer.removeListener.bind(ipcRenderer),
+    invoke: ipcRenderer.invoke.bind(ipcRenderer),
+  },
+};
+
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld("electron", electron);
+    contextBridge.exposeInMainWorld("github", github);
   } catch (error) {
-    console.error(error)
+    console.error("Failed to expose APIs via contextBridge:", error);
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  // @ts-ignore (define in d.ts)
+  window.electron = electron;
+  // @ts-ignore (define in d.ts)
+  window.github = github;
 }
